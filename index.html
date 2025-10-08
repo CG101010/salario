@@ -8,20 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <style>
-        /* Configurações de tema e fonte */
+        /* Configurações de tema e fonte (DARK MODE) */
         :root {
-            --color-primary: #3b82f6; /* Azul do Tailwind 'blue-500' */
-            --color-secondary: #e5e7eb; /* Cinza claro */
-            --color-success: #10b981; /* Verde do Tailwind 'emerald-500' */
+            --color-primary: #60a5fa; /* Azul claro do Tailwind 'blue-400' */
+            --color-secondary: #1a1a1a; /* Fundo escuro */
+            --color-success: #10b981; /* Verde */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-secondary);
+            background-color: var(--color-secondary); /* Usa o novo fundo escuro */
         }
         .card {
-            background-color: white;
+            background-color: #2d2d2d; /* Fundo do card escuro */
             border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2); /* Sombra mais visível */
         }
         .tooltip-container {
             position: relative;
@@ -31,7 +31,7 @@
         .tooltip-text {
             visibility: hidden;
             width: 300px;
-            background-color: #333;
+            background-color: #555; /* Fundo mais escuro para tooltip */
             color: #fff;
             text-align: left;
             border-radius: 6px;
@@ -60,44 +60,45 @@
 <body class="p-4 md:p-8">
 
     <header class="mb-8 text-center">
-        <h1 class="text-4xl font-extrabold text-gray-800 tracking-tight">Calculadora Trabalhista da GABRIELA</h1>
-        <p class="text-gray-500 mt-2">Cálculo de INSS e IRRF conforme tabelas progressivas</p>
+        <h1 class="text-4xl font-extrabold text-gray-100 tracking-tight">Calculadora Trabalhista - GTK</h1>
+        <p class="text-gray-400 mt-2">Cálculo de INSS e IRRF conforme tabelas progressivas</p>
     </header>
 
     <main class="max-w-6xl mx-auto grid grid-cols-1 lg:main-grid gap-8">
         
         <!-- Card de Entradas -->
         <div id="input-card" class="card p-6 md:p-8">
-            <h2 class="text-2xl font-semibold mb-6 text-gray-700 border-b pb-3">Entradas do Salário Bruto e Deduções</h2>
+            <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Entradas do Salário Bruto e Deduções</h2>
             
             <form id="calculation-form" class="space-y-5">
 
                 <!-- Grupo de Entradas Brutas -->
                 <div class="grid sm:grid-cols-2 gap-5">
+                    
+                    <!-- CAMPOS PARA CÁLCULO DSR (MOVIMENTADOS PARA O TOPO) -->
                     <label class="block">
-                        <span class="text-gray-700 font-medium">Salário Base (R$)</span>
-                        <input type="number" id="salarioBase" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="0.00" min="0" step="0.01">
+                        <span class="text-gray-200 font-medium">Dias Úteis do Mês</span>
+                        <input type="number" id="diasUteis" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="22" min="1" step="1">
                     </label>
                     <label class="block">
-                        <span class="text-gray-700 font-medium">Comissão (R$)</span>
-                        <input type="number" id="comissao" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="0.00" min="0" step="0.01">
+                        <span class="text-gray-200 font-medium">Dias de DSR (Descanso Remunerado)</span>
+                        <input type="number" id="dsr" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="5" min="0" step="1">
+                    </label>
+
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Salário Base (R$)</span>
+                        <input type="number" id="salarioBase" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
+                    </label>
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Comissão (R$)</span>
+                        <input type="number" id="comissao" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
                     </label>
                     
-                    <!-- NOVOS CAMPOS PARA CÁLCULO DSR -->
                     <label class="block">
-                        <span class="text-gray-700 font-medium">Dias Úteis do Mês</span>
-                        <input type="number" id="diasUteis" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="22" min="1" step="1">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-700 font-medium">Dias de DSR (Descanso Remunerado)</span>
-                        <input type="number" id="dsr" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="5" min="0" step="1">
-                    </label>
-                    
-                    <label class="block">
-                        <span class="text-gray-700 font-medium">Prêmio (R$)</span>
-                        <input type="number" id="premio" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="0.00" min="0" step="0.01">
-                        <p class="text-xs text-gray-500 mt-1">
-                            *Prêmios não compõem a base de cálculo do INSS.
+                        <span class="text-gray-200 font-medium">Prêmio (R$)</span>
+                        <input type="number" id="premio" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
+                        <p class="text-xs text-gray-400 mt-1">
+                            Prêmios não geram incidências de INSS, FGTS ou encargos trabalhistas, apenas de IRRF.
                         </p>
                     </label>
                     
@@ -106,29 +107,35 @@
                 </div>
 
                 <!-- DISPLAY DO REFLEXO CALCULADO -->
-                <div class="flex justify-between items-center py-2 px-3 bg-indigo-50 rounded-md border border-indigo-200">
-                    <span class="text-gray-700 font-medium">Reflexo de Comissão (R$) - Calculado</span>
-                    <span id="reflexoComissaoDisplay" class="font-bold text-indigo-700">R$ 0,00</span>
+                <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
+                    <span class="text-gray-200 font-medium">Reflexo de Comissão (R$) - Calculado</span>
+                    <span id="reflexoComissaoDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
                 </div>
                 
                 <!-- Grupo de Deduções -->
-                <h3 class="text-xl font-semibold pt-4 border-t mt-4 text-gray-700">Deduções e Dependentes</h3>
+                <h3 class="text-xl font-semibold pt-4 border-t border-gray-600 mt-4 text-gray-100">Deduções e Dependentes</h3>
 
                 <label class="block">
-                    <span class="text-gray-700 font-medium">Número de Dependentes</span>
-                    <input type="number" id="dependentes" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="0" min="0" step="1">
+                    <span class="text-gray-200 font-medium">Número de Dependentes</span>
+                    <input type="number" id="dependentes" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0" min="0" step="1">
                 </label>
 
-                <label class="block">
-                    <span class="text-gray-700 font-medium">Mensalidade de Plano de Saúde (R$)</span>
-                    <input type="number" id="planoSaude" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 border" value="0.00" min="0" step="0.01">
-                </label>
+                <!-- Campos de Plano de Saúde e Outros Descontos (Layout 1x1) -->
+                <div class="grid sm:grid-cols-2 gap-5">
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Mensalidade Plano Saúde (R$)</span>
+                        <input type="number" id="planoSaude" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
+                    </label>
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Outros Descontos (R$)</span>
+                        <input type="number" id="outrosDescontos" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
+                    </label>
+                </div>
+                <!-- Fim dos Campos de Descontos -->
 
-                <div class="pt-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                    <p class="text-sm font-medium text-blue-800">
-                        O cálculo do IRRF aplica automaticamente a **dedução total** mais vantajosa:
-                        <span class="font-bold">Dedução Legal Completa (INSS + Dependentes)</span> ou a
-                        <span class="font-bold">Dedução Simplificada (R$ 607,20)</span>.
+                <div class="pt-2 bg-blue-900 p-3 rounded-lg border border-blue-700">
+                    <p class="text-sm font-medium text-blue-300">
+                        O sistema aplica automaticamente a forma de dedução mais benéfica ao contribuinte no cálculo do IRRF, comparando a Dedução Legal Completa (INSS + Dependentes) com a Dedução Simplificada (R$ 607,20).
                     </p>
                 </div>
 
@@ -137,7 +144,7 @@
                     <button type="button" onclick="calcularTudo()" class="flex-1 px-4 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 transform hover:scale-[1.02]">
                         Calcular
                     </button>
-                    <button type="button" onclick="limparCampos()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-800 font-bold rounded-lg shadow-md hover:bg-gray-400 transition duration-150 transform hover:scale-[1.02]">
+                    <button type="button" onclick="limparCampos()" class="flex-1 px-4 py-3 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition duration-150 transform hover:scale-[1.02]">
                         Limpar
                     </button>
                 </div>
@@ -147,79 +154,85 @@
 
         <!-- Card de Resultados -->
         <div id="output-card" class="card p-6 md:p-8 h-fit lg:sticky lg:top-8">
-            <h2 class="text-2xl font-semibold mb-6 text-gray-700 border-b pb-3">Resultados dos Cálculos</h2>
+            <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Resultados dos Cálculos</h2>
 
             <div class="space-y-4">
                 
                 <!-- Linhas de Resultado Calculado -->
-                <div class="flex justify-between items-center border-b pb-2">
-                    <span class="text-gray-600">Total Bruto</span>
-                    <span id="resultadoTotalBruto" class="font-bold text-lg">R$ 0,00</span>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <span class="text-gray-400">Total Bruto</span>
+                    <span id="resultadoTotalBruto" class="font-bold text-lg text-gray-200">R$ 0,00</span>
                 </div>
 
                 <!-- Base INSS -->
-                <div class="flex justify-between items-center border-b pb-2 tooltip-container">
-                    <span class="text-gray-600">Base de Cálculo INSS</span>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
+                    <span class="text-gray-400">Base de Cálculo INSS</span>
                     <span class="tooltip-text">Base INSS = Mínimo entre o Salário de Contribuição (sem prêmios) e o Teto do INSS (R$ 8.157,41).</span>
-                    <span id="resultadoBaseINSS" class="font-bold text-gray-800">R$ 0,00</span>
+                    <span id="resultadoBaseINSS" class="font-bold text-gray-200">R$ 0,00</span>
                 </div>
 
-                <!-- NOVO: Base FGTS -->
-                <div class="flex justify-between items-center border-b pb-2 tooltip-container">
-                    <span class="text-gray-600">Base de Cálculo FGTS</span>
-                    <span class="tooltip-text">A base do FGTS é o Total Bruto (incluindo comissões e DSR, mas excluindo Prêmios) - R$ 8.157,41.</span>
-                    <span id="resultadoBaseFGTS" class="font-bold text-gray-800">R$ 0,00</span>
+                <!-- Base FGTS -->
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
+                    <span class="text-gray-400">Base de Cálculo FGTS</span>
+                    <span class="tooltip-text">A base do FGTS é o Total Bruto (incluindo comissões e DSR, mas excluindo Prêmios).</span>
+                    <span id="resultadoBaseFGTS" class="font-bold text-gray-200">R$ 0,00</span>
                 </div>
 
-                <!-- NOVO: Valor FGTS -->
-                <div class="flex justify-between items-center py-2 bg-green-50 rounded-lg px-2">
-                    <span class="font-semibold text-green-700">FGTS Pago (8% Empresa)</span>
-                    <span id="resultadoValorFGTS" class="font-extrabold text-xl text-green-700">R$ 0,00</span>
+                <!-- Valor FGTS -->
+                <div class="flex justify-between items-center py-2 bg-green-900 rounded-lg px-2">
+                    <span class="font-semibold text-green-400">FGTS Pago (8% Empresa)</span>
+                    <span id="resultadoValorFGTS" class="font-extrabold text-xl text-green-400">R$ 0,00</span>
                 </div>
                 
                 <!-- Desconto INSS -->
-                <div class="flex justify-between items-center py-2 bg-gray-50 rounded-lg px-2 mt-4">
-                    <span class="font-semibold text-gray-700">INSS Descontado</span>
-                    <span id="resultadoINSS" class="font-extrabold text-xl text-red-600">R$ 0,00</span>
+                <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2 mt-4">
+                    <span class="font-semibold text-gray-200">INSS Descontado</span>
+                    <span id="resultadoINSS" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
                 </div>
 
                 <!-- Base IRRF -->
-                <div class="flex justify-between items-center border-b pb-2 pt-2 tooltip-container">
-                    <span class="text-gray-600">Base de Cálculo IRRF</span>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 pt-2 tooltip-container">
+                    <span class="text-gray-400">Base de Cálculo IRRF</span>
                     <span class="tooltip-text">
                         Base IRRF = Total Bruto (incluindo prêmio) - Dedução Total Aplicada. A Dedução Total Aplicada é o maior valor entre a Dedução Legal (INSS + Dependentes) e a Dedução Simplificada (R$ 607,20).
                     </span>
-                    <span id="resultadoBaseIRRF" class="font-bold text-gray-800">R$ 0,00</span>
+                    <span id="resultadoBaseIRRF" class="font-bold text-gray-200">R$ 0,00</span>
                 </div>
                 
                 <!-- Dedução IRRF Aplicada (NOVA LINHA) -->
-                <div class="flex justify-between items-center border-b pb-2">
-                    <span class="text-gray-600">Dedução IRRF Aplicada</span>
-                    <span id="deducaoAplicadaTipo" class="font-bold text-gray-800">Legal (INSS + Dependentes)</span>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <span class="text-gray-400">Dedução IRRF Aplicada</span>
+                    <span id="deducaoAplicadaTipo" class="font-bold text-gray-200">Legal (INSS + Dependentes)</span>
                 </div>
 
                 <!-- Desconto IRRF -->
-                <div class="flex justify-between items-center py-2 bg-gray-50 rounded-lg px-2">
-                    <span class="font-semibold text-gray-700">IRRF Descontado</span>
-                    <span id="resultadoIRRF" class="font-extrabold text-xl text-red-600">R$ 0,00</span>
+                <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2">
+                    <span class="font-semibold text-gray-200">IRRF Descontado</span>
+                    <span id="resultadoIRRF" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
                 </div>
 
                 <!-- Desconto Plano de Saúde -->
-                <div class="flex justify-between items-center border-b pb-2">
-                    <span class="text-gray-600">Desconto Plano de Saúde</span>
-                    <span id="resultadoPlanoSaude" class="font-bold text-red-600">R$ 0,00</span>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <span class="text-gray-400">Desconto Plano de Saúde</span>
+                    <span id="resultadoPlanoSaude" class="font-bold text-red-400">R$ 0,00</span>
+                </div>
+                
+                <!-- Outros Descontos -->
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                    <span class="text-gray-400">Outros Descontos</span>
+                    <span id="resultadoOutrosDescontos" class="font-bold text-red-400">R$ 0,00</span>
                 </div>
 
                 <!-- Total de Descontos -->
-                <div class="flex justify-between items-center border-t border-gray-300 pt-4">
-                    <span class="text-xl font-bold text-gray-800">Total de Descontos</span>
-                    <span id="resultadoTotalDescontos" class="font-extrabold text-2xl text-red-700">R$ 0,00</span>
+                <div class="flex justify-between items-center border-t border-gray-600 pt-4">
+                    <span class="text-xl font-bold text-gray-200">Total de Descontos</span>
+                    <span id="resultadoTotalDescontos" class="font-extrabold text-2xl text-red-500">R$ 0,00</span>
                 </div>
 
                 <!-- Salário Líquido -->
                 <div class="flex justify-between items-center pt-2">
-                    <span class="text-2xl font-bold text-gray-900">Salário Líquido</span>
-                    <span id="resultadoSalarioLiquido" class="font-extrabold text-3xl text-green-600">R$ 0,00</span>
+                    <span class="text-2xl font-bold text-gray-100">Salário Líquido</span>
+                    <span id="resultadoSalarioLiquido" class="font-extrabold text-3xl text-green-400">R$ 0,00</span>
                 </div>
 
             </div>
@@ -345,6 +358,8 @@
             
             // Valor do Plano de Saúde para desconto no líquido
             const planoSaude = parseFloat($('planoSaude').value) || 0; 
+            // Valor de Outros Descontos
+            const outrosDescontos = parseFloat($('outrosDescontos').value) || 0; 
 
             // ENTRADAS PARA CÁLCULO DO REFLEXO
             const diasUteis = parseInt($('diasUteis').value) || 0;
@@ -401,8 +416,8 @@
             const descontoIRRF = calcularIRRF(baseIRRF);
 
             // 6. Resultados Finais
-            // TOTAL DE DESCONTOS: INSS + IRRF + Plano de Saúde
-            const totalDescontos = descontoINSS + descontoIRRF + planoSaude; 
+            // TOTAL DE DESCONTOS: INSS + IRRF + Plano de Saúde + Outros Descontos
+            const totalDescontos = descontoINSS + descontoIRRF + planoSaude + outrosDescontos; 
             const salarioLiquido = totalBruto - totalDescontos;
 
             // 7. Atualiza a interface
@@ -412,14 +427,15 @@
             // Resultados INSS e FGTS
             $('resultadoBaseINSS').textContent = formatCurrency(baseINSS);
             $('resultadoINSS').textContent = formatCurrency(descontoINSS);
-            $('resultadoBaseFGTS').textContent = formatCurrency(baseFGTS); // NOVO
-            $('resultadoValorFGTS').textContent = formatCurrency(valorFGTS); // NOVO
+            $('resultadoBaseFGTS').textContent = formatCurrency(baseFGTS); 
+            $('resultadoValorFGTS').textContent = formatCurrency(valorFGTS); 
 
             // Resultados IRRF e Líquido
             $('resultadoBaseIRRF').textContent = formatCurrency(baseIRRF);
             $('deducaoAplicadaTipo').textContent = deducaoTipo;
             $('resultadoIRRF').textContent = formatCurrency(descontoIRRF);
             $('resultadoPlanoSaude').textContent = formatCurrency(planoSaude); 
+            $('resultadoOutrosDescontos').textContent = formatCurrency(outrosDescontos); // Novo
             $('resultadoTotalDescontos').textContent = formatCurrency(totalDescontos);
             $('resultadoSalarioLiquido').textContent = formatCurrency(salarioLiquido);
         }
