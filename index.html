@@ -97,19 +97,31 @@
                     <label class="block">
                         <span class="text-gray-200 font-medium">Prêmio (R$)</span>
                         <input type="number" id="premio" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                        <p class="text-xs text-gray-400 mt-1">
-                            Prêmios não geram incidências de INSS, FGTS ou encargos trabalhistas, apenas de IRRF.
-                        </p>
                     </label>
-                    
-                    <!-- Espaço Vazio para alinhamento -->
-                    <div></div> 
+                    <!-- NOVO CAMPO: Horas Extras -->
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Horas Extras (R$)</span>
+                        <input type="number" id="horasExtras" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
+                    </label>
                 </div>
 
-                <!-- DISPLAY DO REFLEXO CALCULADO -->
-                <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
-                    <span class="text-gray-200 font-medium">Reflexo de Comissão (R$) - Calculado</span>
-                    <span id="reflexoComissaoDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
+                <!-- NOTAS SOBRE INCIDÊNCIA DE IMPOSTOS -->
+                <p class="text-xs text-gray-400 -mt-3">
+                    Nota: Prêmios **não** geram incidências de INSS ou FGTS. Horas Extras **sim**, e ainda geram reflexo de DSR.
+                </p>
+
+                <!-- DISPLAY DOS REFLEXOS CALCULADOS (2 COLUNAS) -->
+                <div class="grid sm:grid-cols-2 gap-5 pt-3">
+                    <!-- Reflexo de Comissão -->
+                    <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
+                        <span class="text-gray-200 font-medium">Reflexo de Comissão (R$)</span>
+                        <span id="reflexoComissaoDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
+                    </div>
+                    <!-- NOVO REFLEXO: Horas Extras -->
+                    <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
+                        <span class="text-gray-200 font-medium">Reflexo de Horas Extras (R$)</span>
+                        <span id="reflexoHorasExtrasDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
+                    </div>
                 </div>
                 
                 <!-- Grupo de Deduções -->
@@ -167,14 +179,14 @@
                 <!-- Base INSS -->
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
                     <span class="text-gray-400">Base de Cálculo INSS</span>
-                    <span class="tooltip-text">Base INSS = Mínimo entre o Salário de Contribuição (sem prêmios) e o Teto do INSS (R$ 8.157,41).</span>
+                    <span class="tooltip-text">Base INSS = Mínimo entre o Salário de Contribuição (Salário + Comissão + Reflexos + Extras) e o Teto do INSS (R$ 8.157,41).</span>
                     <span id="resultadoBaseINSS" class="font-bold text-gray-200">R$ 0,00</span>
                 </div>
 
                 <!-- Base FGTS -->
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
                     <span class="text-gray-400">Base de Cálculo FGTS</span>
-                    <span class="tooltip-text">A base do FGTS é o Total Bruto (incluindo comissões e DSR, mas excluindo Prêmios).</span>
+                    <span class="tooltip-text">A base do FGTS é o Salário de Contribuição integral (excluindo apenas Prêmios).</span>
                     <span id="resultadoBaseFGTS" class="font-bold text-gray-200">R$ 0,00</span>
                 </div>
 
@@ -354,11 +366,11 @@
             const salarioBase = parseFloat($('salarioBase').value) || 0;
             const comissao = parseFloat($('comissao').value) || 0;
             const premio = parseFloat($('premio').value) || 0;
-            const numDependentes = parseInt($('dependentes').value) || 0;
+            // NOVO CAMPO: Horas Extras
+            const horasExtras = parseFloat($('horasExtras').value) || 0; 
             
-            // Valor do Plano de Saúde para desconto no líquido
+            const numDependentes = parseInt($('dependentes').value) || 0;
             const planoSaude = parseFloat($('planoSaude').value) || 0; 
-            // Valor de Outros Descontos
             const outrosDescontos = parseFloat($('outrosDescontos').value) || 0; 
 
             // ENTRADAS PARA CÁLCULO DO REFLEXO
@@ -371,14 +383,22 @@
                 // Formula: (Comissão / Dias Úteis) * DSR
                 reflexoComissao = (comissao / diasUteis) * dsr;
             }
-            // Arredonda o reflexo
             reflexoComissao = Math.round(reflexoComissao * 100) / 100;
             
-            // 2. Cálculo do Total Bruto (Inclui Salário Base, Comissão, Reflexo e Prêmio)
-            const totalBruto = salarioBase + comissao + reflexoComissao + premio;
+            // CÁLCULO DO REFLEXO DE HORAS EXTRAS (NOVO)
+            let reflexoHorasExtras = 0;
+            if (diasUteis > 0 && horasExtras > 0) {
+                // Formula: (Horas Extras / Dias Úteis) * DSR
+                reflexoHorasExtras = (horasExtras / diasUteis) * dsr;
+            }
+            reflexoHorasExtras = Math.round(reflexoHorasExtras * 100) / 100;
+
+            
+            // 2. Cálculo do Total Bruto (Inclui Salário Base, Comissão, Reflexo, Prêmio, Horas Extras e Reflexo HE)
+            const totalBruto = salarioBase + comissao + reflexoComissao + premio + horasExtras + reflexoHorasExtras;
             
             // 2b. Base Contribuível para INSS e FGTS (EXCLUI PRÊMIO)
-            const baseContribuivel = salarioBase + comissao + reflexoComissao;
+            const baseContribuivel = salarioBase + comissao + reflexoComissao + horasExtras + reflexoHorasExtras;
 
             // 3. Cálculo do INSS
             const baseINSS = Math.min(baseContribuivel, INSS_MAX_CONTRIBUTION_BASE);
@@ -423,6 +443,7 @@
             // 7. Atualiza a interface
             $('resultadoTotalBruto').textContent = formatCurrency(totalBruto);
             $('reflexoComissaoDisplay').textContent = formatCurrency(reflexoComissao); 
+            $('reflexoHorasExtrasDisplay').textContent = formatCurrency(reflexoHorasExtras); // NOVO
             
             // Resultados INSS e FGTS
             $('resultadoBaseINSS').textContent = formatCurrency(baseINSS);
@@ -435,7 +456,7 @@
             $('deducaoAplicadaTipo').textContent = deducaoTipo;
             $('resultadoIRRF').textContent = formatCurrency(descontoIRRF);
             $('resultadoPlanoSaude').textContent = formatCurrency(planoSaude); 
-            $('resultadoOutrosDescontos').textContent = formatCurrency(outrosDescontos); // Novo
+            $('resultadoOutrosDescontos').textContent = formatCurrency(outrosDescontos); 
             $('resultadoTotalDescontos').textContent = formatCurrency(totalDescontos);
             $('resultadoSalarioLiquido').textContent = formatCurrency(salarioLiquido);
         }
