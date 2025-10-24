@@ -10,18 +10,18 @@
     <style>
         /* Configurações de tema e fonte (DARK MODE) */
         :root {
-            --color-primary: #60a5fa; /* Azul claro do Tailwind 'blue-400' */
-            --color-secondary: #1a1a1a; /* Fundo escuro */
-            --color-success: #10b981; /* Verde */
+            --color-primary: #60a5fa; 
+            --color-secondary: #1a1a1a; 
+            --color-success: #10b981; 
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-secondary); /* Usa o novo fundo escuro */
+            background-color: var(--color-secondary); 
         }
         .card {
-            background-color: #2d2d2d; /* Fundo do card escuro */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2); /* Sombra mais visível */
+            background-color: #2d2d2d; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2); 
         }
         .tooltip-container {
             position: relative;
@@ -31,14 +31,14 @@
         .tooltip-text {
             visibility: hidden;
             width: 300px;
-            background-color: #555; /* Fundo mais escuro para tooltip */
+            background-color: #555; 
             color: #fff;
             text-align: left;
             border-radius: 6px;
             padding: 10px;
             position: absolute;
             z-index: 10;
-            bottom: 125%; /* Posição acima do elemento pai */
+            bottom: 125%; 
             left: 50%;
             margin-left: -150px;
             opacity: 0;
@@ -55,460 +55,947 @@
                 grid-template-columns: 1.5fr 1fr;
             }
         }
+
+        /* Estilos do Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: #2d2d2d;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            max-width: 90%;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Estilos específicos para o novo modelo */
+        .holerite-container-new {
+            max-width: 3xl; 
+            margin: auto;
+            background-color: white; 
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Estilos de Impressão (Holerite) */
+        @media print {
+            body > * {
+                display: none !important; 
+            }
+            #receipt-output {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                min-height: 100vh;
+                background-color: #fff;
+                padding: 5mm; /* Reduzido o padding para impressão */
+            }
+            /* O container do holerite é forçado a ter meia largura (aprox. 105mm) */
+            .holerite-container-new {
+                max-width: 105mm !important; /* Aproximadamente metade da largura do A4 (210mm) */
+                margin: 0 !important; /* Remove margem */
+                border: none !important; /* Remove borda */
+                box-shadow: none !important; /* Remove sombra */
+                padding: 0 !important;
+            }
+            /* Reduzindo o tamanho da fonte para caber */
+            .holerite-container-new * {
+                font-size: 8pt !important; 
+            }
+            .holerite-container-new .text-2xl {
+                font-size: 10pt !important; 
+            }
+            .holerite-container-new .text-3xl {
+                font-size: 12pt !important; 
+            }
+            /* Esconde o botão de impressão no recibo, para evitar loops */
+            #receipt-output .no-print {
+                display: none !important;
+            }
+            /* Configura a página A4, mas com margem zero para o conteúdo se ajustar */
+            @page { size: A4; margin: 0; } 
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <header class="mb-8 text-center">
-        <h1 class="text-4xl font-extrabold text-gray-100 tracking-tight">Calculadora Trabalhista - GTK</h1>
-        <p class="text-gray-400 mt-2">Cálculo de INSS e IRRF conforme tabelas progressivas</p>
-    </header>
+    <!-- Recibo em Tela Cheia (Escondido por padrão) -->
+    <div id="receipt-output" class="hidden min-h-screen pt-4 pb-12">
+        <!-- O conteúdo do holerite será injetado aqui pelo JavaScript -->
+    </div>
 
-    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:main-grid gap-8">
-        
-        <!-- Card de Entradas -->
-        <div id="input-card" class="card p-6 md:p-8">
-            <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Entradas do Salário Bruto e Deduções</h2>
+    <!-- Interface Principal (Visível por padrão) -->
+    <div id="main-interface">
+        <header class="mb-8 text-center">
+            <!-- GTK em itálico e azul -->
+            <h1 class="text-4xl font-extrabold text-gray-100 tracking-tight">Calculadora Trabalhista - <span class="italic text-blue-400">GTK</span></h1>
+            <p class="text-gray-400 mt-2">Cálculo de INSS e IRRF conforme tabelas progressivas</p>
+        </header>
+
+        <main class="max-w-6xl mx-auto grid grid-cols-1 lg:main-grid gap-8">
             
-            <form id="calculation-form" class="space-y-5">
-
-                <!-- Grupo de Entradas Brutas -->
-                <div class="grid sm:grid-cols-2 gap-5">
-                    
-                    <!-- CAMPOS PARA CÁLCULO DSR (MOVIMENTADOS PARA O TOPO) -->
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Dias Úteis do Mês</span>
-                        <input type="number" id="diasUteis" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="22" min="1" step="1">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Dias de DSR (Descanso Remunerado)</span>
-                        <input type="number" id="dsr" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="5" min="0" step="1">
-                    </label>
-
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Salário Base (R$)</span>
-                        <input type="number" id="salarioBase" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Comissão (R$)</span>
-                        <input type="number" id="comissao" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                    
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Prêmio (R$)</span>
-                        <input type="number" id="premio" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                    <!-- NOVO CAMPO: Horas Extras -->
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Horas Extras (R$)</span>
-                        <input type="number" id="horasExtras" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                </div>
-
-                <!-- NOTAS SOBRE INCIDÊNCIA DE IMPOSTOS -->
-                <p class="text-xs text-gray-400 -mt-3">
-                    Nota: Prêmios **não** geram incidências de INSS ou FGTS. Horas Extras **sim**, e ainda geram reflexo de DSR.
-                </p>
-
-                <!-- DISPLAY DOS REFLEXOS CALCULADOS (2 COLUNAS) -->
-                <div class="grid sm:grid-cols-2 gap-5 pt-3">
-                    <!-- Reflexo de Comissão -->
-                    <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
-                        <span class="text-gray-200 font-medium">Reflexo de Comissão (R$)</span>
-                        <span id="reflexoComissaoDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
-                    </div>
-                    <!-- NOVO REFLEXO: Horas Extras -->
-                    <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
-                        <span class="text-gray-200 font-medium">Reflexo de Horas Extras (R$)</span>
-                        <span id="reflexoHorasExtrasDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
-                    </div>
-                </div>
+            <!-- Card de Entradas -->
+            <div id="input-card" class="card p-6 md:p-8">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Entradas do Salário Bruto e Deduções</h2>
                 
-                <!-- Grupo de Deduções -->
-                <h3 class="text-xl font-semibold pt-4 border-t border-gray-600 mt-4 text-gray-100">Deduções e Dependentes</h3>
+                <form id="calculation-form" class="space-y-5">
 
-                <label class="block">
-                    <span class="text-gray-200 font-medium">Número de Dependentes</span>
-                    <input type="number" id="dependentes" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0" min="0" step="1">
-                </label>
+                    <!-- Grupo de Entradas Brutas -->
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        
+                        <!-- DIAS ÚTEIS E DSR (mantidos como number para contagem) -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Dias Úteis do Mês</span>
+                            <input type="number" id="diasUteis" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="22" min="1" step="1">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Dias de DSR (Descanso Remunerado)</span>
+                            <input type="number" id="dsr" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="5" min="0" step="1">
+                        </label>
 
-                <!-- Campos de Plano de Saúde e Outros Descontos (Layout 1x1) -->
-                <div class="grid sm:grid-cols-2 gap-5">
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Mensalidade Plano Saúde (R$)</span>
-                        <input type="number" id="planoSaude" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-200 font-medium">Outros Descontos (R$)</span>
-                        <input type="number" id="outrosDescontos" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="0.00" min="0" step="0.01">
-                    </label>
-                </div>
-                <!-- Fim dos Campos de Descontos -->
+                        <!-- SALÁRIO BASE -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Salário Base (R$)</span>
+                            <input type="text" id="salarioBase" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                        <!-- COMISSÃO -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Comissão (R$)</span>
+                            <input type="text" id="comissao" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                        
+                        <!-- PRÊMIO -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Prêmio (R$)</span>
+                            <input type="text" id="premio" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                        <!-- Horas Extras -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Horas Extras (R$)</span>
+                            <input type="text" id="horasExtras" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                    </div>
 
-                <div class="pt-2 bg-blue-900 p-3 rounded-lg border border-blue-700">
-                    <p class="text-sm font-medium text-blue-300">
-                        O sistema aplica automaticamente a forma de dedução mais benéfica ao contribuinte no cálculo do IRRF, comparando a Dedução Legal Completa (INSS + Dependentes) com a Dedução Simplificada (R$ 607,20).
+                    <!-- NOTAS SOBRE INCIDÊNCIA DE IMPOSTOS -->
+                    <p class="text-xs text-gray-400 -mt-3">
+                        Nota: Prêmios **não** geram incidências de INSS ou FGTS.
                     </p>
+
+                    <!-- DISPLAY DOS REFLEXOS CALCULADOS (2 COLUNAS) -->
+                    <div class="grid sm:grid-cols-2 gap-5 pt-3">
+                        <!-- Reflexo de Comissão -->
+                        <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
+                            <span class="text-gray-200 font-medium">Reflexo de Comissão (R$)</span>
+                            <span id="reflexoComissaoDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
+                        </div>
+                        <!-- NOVO REFLEXO: Horas Extras -->
+                        <div class="flex justify-between items-center py-2 px-3 bg-indigo-900 rounded-md border border-indigo-700">
+                            <span class="text-gray-200 font-medium">Reflexo de Horas Extras (R$)</span>
+                            <span id="reflexoHorasExtrasDisplay" class="font-bold text-indigo-400">R$ 0,00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Grupo de Deduções -->
+                    <h3 class="text-xl font-semibold pt-4 border-t border-gray-600 mt-4 text-gray-100">Deduções e Dependentes</h3>
+
+                    <!-- DEPENDENTES (mantido como number para contagem) -->
+                    <label class="block">
+                        <span class="text-gray-200 font-medium">Número de Dependentes</span>
+                        <input type="number" id="dependentes" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0" min="0" step="1">
+                    </label>
+
+                    <!-- Campos de Plano de Saúde e Outros Descontos (Layout 1x1) -->
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <!-- PLANO SAÚDE -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Mensalidade Plano Saúde (R$)</span>
+                            <input type="text" id="planoSaude" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                        <!-- OUTROS DESCONTOS -->
+                        <label class="block">
+                            <span class="text-gray-200 font-medium">Outros Descontos (R$)</span>
+                            <input type="text" id="outrosDescontos" class="currency-input mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="" placeholder="0,00">
+                        </label>
+                    </div>
+                    <!-- Fim dos Campos de Descontos -->
+
+                    <div class="pt-2 bg-blue-900 p-3 rounded-lg border border-blue-700">
+                        <p class="text-sm font-medium text-blue-300">
+                            O cálculo do IRRF aplica automaticamente a Dedução Legal Completa ou a Dedução Simplificada (R$ 564,80), o que for mais benéfico.
+                        </p>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" onclick="calcularTudo()" class="flex-1 px-4 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 transform hover:scale-[1.02]">
+                            Calcular
+                        </button>
+                        <button type="button" onclick="limparCampos()" class="flex-1 px-4 py-3 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition duration-150 transform hover:scale-[1.02]">
+                            Limpar
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Card de Resultados -->
+            <div id="output-card" class="card p-6 md:p-8 h-fit lg:sticky lg:top-8">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Resultados dos Cálculos</h2>
+
+                <div class="space-y-4">
+                    
+                    <!-- Linhas de Resultado Calculado -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-400">Total Bruto</span>
+                        <span id="resultadoTotalBruto" class="font-bold text-lg text-gray-200">R$ 0,00</span>
+                    </div>
+
+                    <!-- Base INSS -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
+                        <span class="text-gray-400">Base de Cálculo INSS</span>
+                        <span class="tooltip-text">Base INSS = Mínimo entre o Salário de Contribuição e o Teto do INSS (R$ 7.786,02 - 2024).</span>
+                        <span id="resultadoBaseINSS" class="font-bold text-gray-200">R$ 0,00</span>
+                    </div>
+
+                    <!-- Base FGTS -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
+                        <span class="text-gray-400">Base de Cálculo FGTS</span>
+                        <span class="tooltip-text">A base do FGTS é o Salário de Contribuição integral (excluindo apenas Prêmios).</span>
+                        <span id="resultadoBaseFGTS" class="font-bold text-gray-200">R$ 0,00</span>
+                    </div>
+
+                    <!-- Valor FGTS -->
+                    <div class="flex justify-between items-center py-2 bg-green-900 rounded-lg px-2">
+                        <span class="font-semibold text-green-400">FGTS Pago (8% Empresa)</span>
+                        <span id="resultadoValorFGTS" class="font-extrabold text-xl text-green-400">R$ 0,00</span>
+                    </div>
+                    
+                    <!-- Desconto INSS -->
+                    <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2 mt-4">
+                        <span class="font-semibold text-gray-200">INSS Descontado</span>
+                        <span id="resultadoINSS" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
+                    </div>
+
+                    <!-- Base IRRF -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2 pt-2 tooltip-container">
+                        <span class="text-gray-400">Base de Cálculo IRRF</span>
+                        <span class="tooltip-text">
+                            Base IRRF = Total Bruto - Dedução Total Aplicada.
+                        </span>
+                        <span id="resultadoBaseIRRF" class="font-bold text-gray-200">R$ 0,00</span>
+                    </div>
+                    
+                    <!-- Dedução IRRF Aplicada (NOVA LINHA) -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-400">Dedução IRRF Aplicada</span>
+                        <span id="deducaoAplicadaTipo" class="font-bold text-gray-200">Legal (INSS + Dependentes)</span>
+                    </div>
+
+                    <!-- Desconto IRRF -->
+                    <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2">
+                        <span class="font-semibold text-gray-200">IRRF Descontado</span>
+                        <span id="resultadoIRRF" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
+                    </div>
+
+                    <!-- Desconto Plano de Saúde -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-400">Desconto Plano de Saúde</span>
+                        <span id="resultadoPlanoSaude" class="font-bold text-red-400">R$ 0,00</span>
+                    </div>
+                    
+                    <!-- Outros Descontos -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span class="text-gray-400">Outros Descontos</span>
+                        <span id="resultadoOutrosDescontos" class="font-bold text-red-400">R$ 0,00</span>
+                    </div>
+
+                    <!-- Total de Descontos -->
+                    <div class="flex justify-between items-center border-t border-gray-600 pt-4">
+                        <span class="text-xl font-bold text-gray-200">Total de Descontos</span>
+                        <span id="resultadoTotalDescontos" class="font-extrabold text-2xl text-red-500">R$ 0,00</span>
+                    </div>
+
+                    <!-- Salário Líquido -->
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-2xl font-bold text-gray-100">Salário Líquido</span>
+                        <span id="resultadoSalarioLiquido" class="font-extrabold text-3xl text-green-400">R$ 0,00</span>
+                    </div>
                 </div>
 
-                <!-- Botões -->
-                <div class="flex space-x-4 pt-4">
-                    <button type="button" onclick="calcularTudo()" class="flex-1 px-4 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 transform hover:scale-[1.02]">
-                        Calcular
+                <!-- NOVO BOTÃO: EMITIR RECIBO -->
+                <div class="pt-8 flex justify-center">
+                    <button type="button" onclick="openModal()" class="w-full px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-xl hover:bg-indigo-600 transition duration-150 transform hover:scale-[1.03]">
+                        EMITIR RECIBO (Holerite)
                     </button>
-                    <button type="button" onclick="limparCampos()" class="flex-1 px-4 py-3 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition duration-150 transform hover:scale-[1.02]">
-                        Limpar
-                    </button>
-                </div>
-
-            </form>
-        </div>
-
-        <!-- Card de Resultados -->
-        <div id="output-card" class="card p-6 md:p-8 h-fit lg:sticky lg:top-8">
-            <h2 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Resultados dos Cálculos</h2>
-
-            <div class="space-y-4">
-                
-                <!-- Linhas de Resultado Calculado -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                    <span class="text-gray-400">Total Bruto</span>
-                    <span id="resultadoTotalBruto" class="font-bold text-lg text-gray-200">R$ 0,00</span>
-                </div>
-
-                <!-- Base INSS -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
-                    <span class="text-gray-400">Base de Cálculo INSS</span>
-                    <span class="tooltip-text">Base INSS = Mínimo entre o Salário de Contribuição (Salário + Comissão + Reflexos + Extras) e o Teto do INSS (R$ 8.157,41).</span>
-                    <span id="resultadoBaseINSS" class="font-bold text-gray-200">R$ 0,00</span>
-                </div>
-
-                <!-- Base FGTS -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 tooltip-container">
-                    <span class="text-gray-400">Base de Cálculo FGTS</span>
-                    <span class="tooltip-text">A base do FGTS é o Salário de Contribuição integral (excluindo apenas Prêmios).</span>
-                    <span id="resultadoBaseFGTS" class="font-bold text-gray-200">R$ 0,00</span>
-                </div>
-
-                <!-- Valor FGTS -->
-                <div class="flex justify-between items-center py-2 bg-green-900 rounded-lg px-2">
-                    <span class="font-semibold text-green-400">FGTS Pago (8% Empresa)</span>
-                    <span id="resultadoValorFGTS" class="font-extrabold text-xl text-green-400">R$ 0,00</span>
-                </div>
-                
-                <!-- Desconto INSS -->
-                <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2 mt-4">
-                    <span class="font-semibold text-gray-200">INSS Descontado</span>
-                    <span id="resultadoINSS" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
-                </div>
-
-                <!-- Base IRRF -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 pt-2 tooltip-container">
-                    <span class="text-gray-400">Base de Cálculo IRRF</span>
-                    <span class="tooltip-text">
-                        Base IRRF = Total Bruto (incluindo prêmio) - Dedução Total Aplicada. A Dedução Total Aplicada é o maior valor entre a Dedução Legal (INSS + Dependentes) e a Dedução Simplificada (R$ 607,20).
-                    </span>
-                    <span id="resultadoBaseIRRF" class="font-bold text-gray-200">R$ 0,00</span>
-                </div>
-                
-                <!-- Dedução IRRF Aplicada (NOVA LINHA) -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                    <span class="text-gray-400">Dedução IRRF Aplicada</span>
-                    <span id="deducaoAplicadaTipo" class="font-bold text-gray-200">Legal (INSS + Dependentes)</span>
-                </div>
-
-                <!-- Desconto IRRF -->
-                <div class="flex justify-between items-center py-2 bg-gray-800 rounded-lg px-2">
-                    <span class="font-semibold text-gray-200">IRRF Descontado</span>
-                    <span id="resultadoIRRF" class="font-extrabold text-xl text-red-400">R$ 0,00</span>
-                </div>
-
-                <!-- Desconto Plano de Saúde -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                    <span class="text-gray-400">Desconto Plano de Saúde</span>
-                    <span id="resultadoPlanoSaude" class="font-bold text-red-400">R$ 0,00</span>
-                </div>
-                
-                <!-- Outros Descontos -->
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                    <span class="text-gray-400">Outros Descontos</span>
-                    <span id="resultadoOutrosDescontos" class="font-bold text-red-400">R$ 0,00</span>
-                </div>
-
-                <!-- Total de Descontos -->
-                <div class="flex justify-between items-center border-t border-gray-600 pt-4">
-                    <span class="text-xl font-bold text-gray-200">Total de Descontos</span>
-                    <span id="resultadoTotalDescontos" class="font-extrabold text-2xl text-red-500">R$ 0,00</span>
-                </div>
-
-                <!-- Salário Líquido -->
-                <div class="flex justify-between items-center pt-2">
-                    <span class="text-2xl font-bold text-gray-100">Salário Líquido</span>
-                    <span id="resultadoSalarioLiquido" class="font-extrabold text-3xl text-green-400">R$ 0,00</span>
                 </div>
 
             </div>
+        </main>
+    </div>
+
+    <!-- Modal para Dados Complementares (Escondido por padrão) -->
+    <div id="modal-complementary-data" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-semibold mb-6 text-gray-100 border-b border-gray-600 pb-3">Dados para Emissão do Recibo</h3>
+            
+            <form id="receipt-details-form" class="space-y-4">
+                
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Competência (Mês/Ano - Ex: 10/2023)</span>
+                    <input type="text" id="competencia" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="MM/AAAA" value="09/2024" required>
+                </label>
+
+                <label class="block">
+                    <span class="text-gray-200 font-medium">CNPJ da Empresa</span>
+                    <input type="text" id="cnpj" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="00.000.000/0000-00" value="00.000.000/0001-00" required>
+                </label>
+
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Nome/Razão Social da Empresa</span>
+                    <!-- O campo agora é editável -->
+                    <input type="text" id="nomeEmpresaDisplay" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" value="GTK Soluções Tecnológicas Ltda." required>
+                </label>
+                
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Nome do Funcionário</span>
+                    <input type="text" id="nomeFuncionario" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="Ex: João da Silva" value="Roberto de Souza" required>
+                </label>
+                
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Função/Cargo</span>
+                    <input type="text" id="funcao" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="Ex: Analista Financeiro Júnior" value="Analista de Sistemas Pleno" required>
+                </label>
+                
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Endereço da Empresa (Apenas para o recibo)</span>
+                    <input type="text" id="enderecoEmpresa" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="Rua, Número, Bairro, Cidade-UF" value="Rua da Inovação, 123 - Centro, São Paulo - SP">
+                </label>
+                
+                <label class="block">
+                    <span class="text-gray-200 font-medium">Código do Funcionário (Apenas para o recibo)</span>
+                    <input type="text" id="codigoFuncionario" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-blue-400 focus:ring focus:ring-blue-400 focus:ring-opacity-50 p-2 border bg-gray-700 text-white" placeholder="Ex: 0045" value="0045">
+                </label>
+
+
+                <div class="flex justify-between space-x-4 pt-4">
+                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="confirmReceiptDetails()" class="flex-1 px-4 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition">
+                        CONFIRMAR E GERAR
+                    </button>
+                </div>
+            </form>
         </div>
-    </main>
+    </div>
+
 
     <script>
         // Variáveis de escopo global para o formulário e resultados
         const $ = id => document.getElementById(id);
 
-        // --- Variáveis Globais e Tabelas ---
-
-        // Tabela Progressiva INSS
-        const INSS_TABLE = [
-            { start: 0.00, end: 1518.00, rate: 0.075 },
-            { start: 1518.01, end: 2793.88, rate: 0.09 },
-            { start: 2793.89, end: 4190.83, rate: 0.12 },
-            { start: 4190.84, end: 8157.41, rate: 0.14 }
-        ];
-        const INSS_MAX_CONTRIBUTION_BASE = 8157.41;
-
-        // Tabela Progressiva IRRF
-        const IRRF_TABLE = [
-            { start: 0.00, end: 2428.80, rate: 0.00, deduction: 0.00 },
-            { start: 2428.81, end: 2826.65, rate: 0.075, deduction: 182.16 },
-            { start: 2826.66, end: 3751.05, rate: 0.15, deduction: 394.16 },
-            { start: 3751.06, end: 4664.68, rate: 0.225, deduction: 675.49 },
-            { start: 4664.69, end: Infinity, rate: 0.275, deduction: 908.73 }
-        ];
-
-        // Dedução por dependente (valor padrão de mercado)
-        const DEPENDENT_DEDUCTION = 189.59;
-        // Dedução simplificada mensal (valor fornecido pelo usuário)
-        const SIMPLIFIED_DEDUCTION = 607.20;
+        // Armazena os resultados calculados para uso no holerite
+        let lastCalculations = {}; 
         
-        // Alíquota do FGTS (8% sobre a base de cálculo)
-        const FGTS_RATE = 0.08; 
+        // --- Variáveis Globais e Tabelas (2024) ---
+
+        // Tabela Progressiva INSS (2024)
+        const INSS_TABLE = [
+            { start: 0.00, end: 1412.00, rate: 0.075 },
+            { start: 1412.01, end: 2661.76, rate: 0.09 },
+            { start: 2661.77, end: 4000.03, rate: 0.12 },
+            { start: 4000.04, end: 7786.02, rate: 0.14 } 
+        ];
+        const INSS_MAX_CONTRIBUTION_BASE = 7786.02; // Teto INSS 2024
+
+        // Tabela Progressiva IRRF (2024 - Simplificada/Ajustada)
+        const IRRF_TABLE = [
+            { start: 0.00, end: 2259.20, rate: 0.00, deduction: 0.00 }, // Faixa de isenção ajustada
+            { start: 2259.21, end: 2826.65, rate: 0.075, deduction: 169.44 },
+            { start: 2826.66, end: 3751.05, rate: 0.15, deduction: 381.44 },
+            { start: 3751.06, end: 4664.68, rate: 0.225, deduction: 662.77 },
+            { start: 4664.69, end: Infinity, rate: 0.275, deduction: 896.00 }
+        ];
+
+        // Dedução máxima legal por dependente (2024)
+        const IRRF_PER_DEPENDENT_DEDUCTION = 189.59;
+        // Dedução simplificada máxima (2024)
+        const IRRF_SIMPLIFIED_DEDUCTION = 564.80; 
+
+        // --- Funções de Ajuda ---
 
         /**
-         * Formata um número como moeda brasileira (R$).
-         * @param {number} value - O valor a ser formatado.
-         * @returns {string} O valor formatado em Reais.
+         * Converte valor monetário (string formatada com vírgula) para número decimal (float).
+         * @param {string} valueString - O valor lido do campo (ex: "1.000,50").
+         * @returns {number} O valor numérico (ex: 1000.50).
          */
-        function formatCurrency(value) {
-            // Arredonda para duas casas decimais para cálculos financeiros
-            const roundedValue = Math.round(value * 100) / 100; 
-            if (isNaN(roundedValue)) return "R$ 0,00";
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(roundedValue);
+        function parseCurrencyToFloat(valueString) {
+            if (!valueString) return 0;
+            // Remove pontos de milhar e substitui vírgula decimal por ponto
+            return parseFloat(valueString.replace(/\./g, '').replace(',', '.')) || 0;
         }
 
+        /**
+         * Formata um número decimal para string em formato monetário BRL.
+         * @param {number} value - O valor numérico.
+         * @returns {string} O valor formatado (ex: "1.000,50").
+         */
+        function formatFloatToCurrency(value) {
+            return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        /**
+         * Formata o input em tempo real, permitindo a vírgula para digitação decimal.
+         */
+        function formatCurrencyInput(event) {
+            const input = event.target;
+            let value = input.value;
+
+            // 1. Remove tudo que não for dígito ou vírgula
+            value = value.replace(/[^\d,]/g, '');
+
+            // 2. Garante que só há UMA vírgula
+            const parts = value.split(',');
+            if (parts.length > 2) {
+                value = parts[0] + ',' + parts.slice(1).join('');
+            }
+
+            // 3. Verifica se existe uma vírgula
+            const commaIndex = value.indexOf(',');
+
+            if (commaIndex === -1) {
+                // Não há vírgula: Formata como número inteiro
+                let num = value.replace(/^0+/, ''); // Remove zeros à esquerda
+                if (num === '') {
+                    input.value = '';
+                    return;
+                }
+                
+                // Aplica separador de milhares (ponto)
+                num = num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                
+                input.value = num;
+            } else {
+                // Há vírgula: Lida com a parte inteira e decimal
+                let integerPart = parts[0];
+                let decimalPart = parts[1];
+
+                // Remove zeros à esquerda da parte inteira (a menos que seja zero)
+                integerPart = integerPart.replace(/^0+(?=\d)/, '');
+                if (integerPart === '') {
+                    integerPart = '0';
+                }
+                
+                // Limita a parte decimal a 2 dígitos
+                decimalPart = decimalPart.substring(0, 2);
+
+                // Aplica separador de milhares à parte inteira
+                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                
+                // Mantém a vírgula e a parte decimal digitada
+                input.value = integerPart + ',' + decimalPart;
+            }
+        }
+
+        /**
+         * Adiciona listeners de input para formatar os campos monetários.
+         */
+        function setupCurrencyInputs() {
+            document.querySelectorAll('.currency-input').forEach(input => {
+                // Adiciona o listener principal para formatação ao digitar
+                input.addEventListener('input', formatCurrencyInput);
+                
+                // Adiciona um listener para preencher com ",00" se o campo for válido ao sair
+                input.addEventListener('blur', (event) => {
+                    const value = event.target.value;
+                    if (value && !value.includes(',')) {
+                        // Converte para float e formata corretamente em BRL
+                        const floatValue = parseCurrencyToFloat(value);
+                        event.target.value = formatFloatToCurrency(floatValue);
+                    } else if (value && value.endsWith(',')) {
+                        // Se terminar com vírgula (ex: "100,"), completa com "00"
+                        event.target.value = value + '00';
+                    }
+                });
+                // Garante que o valor inicial seja formatado se houver um
+                if (input.value) {
+                    const floatValue = parseCurrencyToFloat(input.value);
+                    input.value = formatFloatToCurrency(floatValue);
+                }
+            });
+            
+            // Adiciona listeners aos campos que afetam o DSR
+            const fieldsToMonitorForDSR = [$('salarioBase'), $('comissao'), $('horasExtras'), $('diasUteis'), $('dsr')];
+            fieldsToMonitorForDSR.forEach(field => {
+                field.addEventListener('input', calcularReflexos);
+                // Chama inicialmente para configurar os displays de reflexo
+                calcularReflexos(); 
+            });
+        }
+        
         // --- Funções de Cálculo ---
 
         /**
-         * Calcula o desconto do INSS usando a tabela progressiva (cálculo por faixas).
-         * @param {number} base - A base de cálculo (Total Bruto limitado ao teto).
-         * @returns {number} O valor do desconto de INSS.
+         * Calcula o INSS de forma progressiva.
+         * @param {number} baseINSS - Salário de Contribuição.
+         * @returns {number} O valor total de INSS a ser descontado.
          */
-        function calcularINSS(base) {
-            let baseCalculo = Math.min(base, INSS_MAX_CONTRIBUTION_BASE);
-            if (baseCalculo <= 0) return 0;
+        function calcularINSS(baseINSS) {
+            let totalINSS = 0;
+            let remainingBase = Math.min(baseINSS, INSS_MAX_CONTRIBUTION_BASE); // Limita ao teto
             
-            let accumulatedDesconto = 0;
-            let previousLimit = 0;
-
-            // Percorre as faixas para calcular o desconto progressivamente
-            for (const faixa of INSS_TABLE) {
-                const limit = faixa.end;
-                const rate = faixa.rate;
-
-                if (baseCalculo > previousLimit) {
-                    // Quanto da base cabe nesta faixa
-                    const valorNestaFaixa = Math.min(baseCalculo, limit) - previousLimit;
-                    // O desconto nesta faixa é o valor contribuível vezes a alíquota
-                    accumulatedDesconto += valorNestaFaixa * rate;
-                }
-                
-                previousLimit = limit;
-                // Se a base já estiver dentro ou abaixo do limite da faixa, interrompe
-                if (baseCalculo <= limit) break;
-            }
-
-            // Arredonda o resultado final do INSS
-            return Math.max(0, Math.round(accumulatedDesconto * 100) / 100);
-        }
-        
-        /**
-         * Calcula o desconto do IRRF usando a tabela progressiva e a parcela a deduzir.
-         * @param {number} base - A base de cálculo IRRF.
-         * @returns {number} O valor do desconto de IRRF.
-         */
-        function calcularIRRF(base) {
-            if (base <= 0) return 0;
-
-            let desconto = 0;
-
-            // Encontra a faixa na tabela
-            for (const faixa of IRRF_TABLE) {
-                if (base >= faixa.start) {
-                    if (base <= faixa.end || faixa.end === Infinity) {
-                        // Aplica a alíquota e subtrai a parcela a deduzir (valor fixo por faixa)
-                        desconto = (base * faixa.rate) - faixa.deduction;
-                        break;
+            if (baseINSS > INSS_MAX_CONTRIBUTION_BASE) {
+                // Se a base ultrapassar o teto, calcula o valor máximo de contribuição possível.
+                for (let i = INSS_TABLE.length - 1; i >= 0; i--) {
+                    const { start, end, rate } = INSS_TABLE[i];
+                    
+                    const limit = Math.min(end, INSS_MAX_CONTRIBUTION_BASE);
+                    
+                    if (remainingBase > start) {
+                        const taxableAmount = remainingBase - start;
+                        totalINSS += taxableAmount * rate;
+                        remainingBase = start; 
                     }
                 }
+                return totalINSS;
+            } else {
+                // Se a base estiver abaixo do teto, calcula por faixas
+                for (let i = INSS_TABLE.length - 1; i >= 0; i--) {
+                    const { start, rate } = INSS_TABLE[i];
+                    
+                    if (baseINSS > start) {
+                        const taxableAmount = baseINSS - start;
+                        totalINSS += taxableAmount * rate;
+                        baseINSS = start; 
+                    }
+                }
+                return totalINSS;
             }
-
-            // O desconto IRRF nunca pode ser negativo e deve ser arredondado
-            return Math.max(0, Math.round(desconto * 100) / 100);
         }
         
         /**
-         * Função principal que lê as entradas, executa os cálculos e atualiza a interface.
+         * Calcula o IRRF.
+         * @param {number} baseIRRF - Base de cálculo: Salário Bruto - INSS - Deduções Legais.
+         * @param {number} dependentes - Número de dependentes.
+         * @returns {object} {irrfValue: number, deductionType: string, ...}
+         */
+        function calcularIRRF(baseIRRF, dependentes) {
+            // 1. Cálculo da Dedução Legal (INSS + Dependentes)
+            const deducaoDependentes = dependentes * IRRF_PER_DEPENDENT_DEDUCTION;
+            
+            // Base de Cálculo Legal
+            let baseCalculoLegal = baseIRRF - lastCalculations.inssValue - deducaoDependentes;
+            
+            if (baseCalculoLegal < 0) baseCalculoLegal = 0;
+
+            let irrfLegal = 0;
+            let deductionRateLegal = 0; 
+            let deductionValueLegal = 0; 
+
+            for (const faixa of IRRF_TABLE) {
+                if (baseCalculoLegal > faixa.start) {
+                    irrfLegal = (baseCalculoLegal * faixa.rate) - faixa.deduction;
+                    deductionRateLegal = faixa.rate * 100;
+                    deductionValueLegal = faixa.deduction;
+                }
+            }
+            
+            irrfLegal = Math.max(0, irrfLegal);
+
+            // 2. Cálculo da Dedução Simplificada (R$ 564,80)
+            const deducaoSimplificada = IRRF_SIMPLIFIED_DEDUCTION;
+            let baseCalculoSimplificada = baseIRRF - deducaoSimplificada;
+
+            if (baseCalculoSimplificada < 0) baseCalculoSimplificada = 0;
+
+            let irrfSimplificado = 0;
+            let deductionRateSimplificada = 0;
+            let deductionValueSimplificada = 0;
+
+            for (const faixa of IRRF_TABLE) {
+                if (baseCalculoSimplificada > faixa.start) {
+                    irrfSimplificado = (baseCalculoSimplificada * faixa.rate) - faixa.deduction;
+                    deductionRateSimplificada = faixa.rate * 100;
+                    deductionValueSimplificada = faixa.deduction;
+                }
+            }
+
+            irrfSimplificado = Math.max(0, irrfSimplificado);
+
+            // 3. Compara e aplica o que for mais benéfico (menor IRRF)
+            if (irrfLegal <= irrfSimplificado) {
+                return {
+                    irrfValue: irrfLegal,
+                    deductionType: `Legal (INSS + ${dependentes} Dep.)`,
+                    base: baseCalculoLegal,
+                    aliquota: deductionRateLegal,
+                    deducao: deductionValueLegal,
+                };
+            } else {
+                return {
+                    irrfValue: irrfSimplificado,
+                    deductionType: 'Simplificada (R$ 564,80)',
+                    base: baseCalculoSimplificada,
+                    aliquota: deductionRateSimplificada,
+                    deducao: deductionValueSimplificada,
+                };
+            }
+        }
+        
+        /**
+         * Calcula o DSR (Descanso Semanal Remunerado) sobre variáveis.
+         */
+        function calcularReflexos() {
+            const comissao = parseCurrencyToFloat($('comissao').value);
+            const horasExtras = parseCurrencyToFloat($('horasExtras').value);
+            const diasUteis = parseInt($('diasUteis').value) || 22;
+            const dsr = parseInt($('dsr').value) || 5;
+            
+            // Evita divisão por zero
+            if (diasUteis === 0) {
+                $('reflexoComissaoDisplay').textContent = 'R$ 0,00';
+                $('reflexoHorasExtrasDisplay').textContent = 'R$ 0,00';
+                return { reflexoComissao: 0, reflexoHorasExtras: 0 };
+            }
+
+            const fatorDSR = dsr / diasUteis;
+            
+            const reflexoComissao = comissao * fatorDSR;
+            const reflexoHorasExtras = horasExtras * fatorDSR;
+
+            // Atualiza os displays dos reflexos no card de entrada
+            $('reflexoComissaoDisplay').textContent = `R$ ${formatFloatToCurrency(reflexoComissao)}`;
+            $('reflexoHorasExtrasDisplay').textContent = `R$ ${formatFloatToCurrency(reflexoHorasExtras)}`;
+
+            return { reflexoComissao, reflexoHorasExtras };
+        }
+
+        /**
+         * Função principal para orquestrar todos os cálculos.
          */
         function calcularTudo() {
-            // 1. Coleta e sanitiza as entradas
-            const salarioBase = parseFloat($('salarioBase').value) || 0;
-            const comissao = parseFloat($('comissao').value) || 0;
-            const premio = parseFloat($('premio').value) || 0;
-            // NOVO CAMPO: Horas Extras
-            const horasExtras = parseFloat($('horasExtras').value) || 0; 
+            // 1. Obter e parsear inputs
+            const salarioBase = parseCurrencyToFloat($('salarioBase').value);
+            const comissao = parseCurrencyToFloat($('comissao').value);
+            const premio = parseCurrencyToFloat($('premio').value);
+            const horasExtras = parseCurrencyToFloat($('horasExtras').value);
+            const dependentes = parseInt($('dependentes').value) || 0;
+            const planoSaude = parseCurrencyToFloat($('planoSaude').value);
+            const outrosDescontos = parseCurrencyToFloat($('outrosDescontos').value);
             
-            const numDependentes = parseInt($('dependentes').value) || 0;
-            const planoSaude = parseFloat($('planoSaude').value) || 0; 
-            const outrosDescontos = parseFloat($('outrosDescontos').value) || 0; 
+            const reflexos = calcularReflexos();
+            const reflexoComissao = reflexos.reflexoComissao;
+            const reflexoHorasExtras = reflexos.reflexoHorasExtras;
 
-            // ENTRADAS PARA CÁLCULO DO REFLEXO
-            const diasUteis = parseInt($('diasUteis').value) || 0;
-            const dsr = parseInt($('dsr').value) || 0;
+            // 2. Cálculo do Total Bruto (Salário de Contribuição)
+            // Salário de Contribuição (Base INSS e FGTS) = Salário Base + Comissão + Horas Extras + Reflexos
+            const salarioContribuicao = salarioBase + comissao + horasExtras + reflexoComissao + reflexoHorasExtras;
+            
+            // Total Bruto (para IRRF) = Salário Contribuição + Prêmio (Prêmio não incide em INSS/FGTS)
+            const totalBruto = salarioContribuicao + premio;
+            
+            // 3. Base de INSS (Limitado ao teto)
+            const baseINSS = salarioContribuicao;
+            const valorINSS = calcularINSS(baseINSS);
+            
+            // 4. Base e Valor FGTS (8% sobre Salário de Contribuição)
+            const baseFGTS = salarioContribuicao; // Prêmios são excluídos
+            const valorFGTS = baseFGTS * 0.08;
+            
+            // Armazena valor do INSS para cálculo do IRRF
+            lastCalculations.inssValue = valorINSS;
 
-            // CÁLCULO DO REFLEXO DE COMISSÃO
-            let reflexoComissao = 0;
-            if (diasUteis > 0 && comissao > 0) {
-                // Formula: (Comissão / Dias Úteis) * DSR
-                reflexoComissao = (comissao / diasUteis) * dsr;
-            }
-            reflexoComissao = Math.round(reflexoComissao * 100) / 100;
+            // 5. Base e Valor IRRF
+            const irrfResult = calcularIRRF(totalBruto, dependentes);
+            const valorIRRF = irrfResult.irrfValue;
             
-            // CÁLCULO DO REFLEXO DE HORAS EXTRAS (NOVO)
-            let reflexoHorasExtras = 0;
-            if (diasUteis > 0 && horasExtras > 0) {
-                // Formula: (Horas Extras / Dias Úteis) * DSR
-                reflexoHorasExtras = (horasExtras / diasUteis) * dsr;
-            }
-            reflexoHorasExtras = Math.round(reflexoHorasExtras * 100) / 100;
-
+            // 6. Total de Descontos
+            const totalDescontos = valorINSS + valorIRRF + planoSaude + outrosDescontos;
             
-            // 2. Cálculo do Total Bruto (Inclui Salário Base, Comissão, Reflexo, Prêmio, Horas Extras e Reflexo HE)
-            const totalBruto = salarioBase + comissao + reflexoComissao + premio + horasExtras + reflexoHorasExtras;
-            
-            // 2b. Base Contribuível para INSS e FGTS (EXCLUI PRÊMIO)
-            const baseContribuivel = salarioBase + comissao + reflexoComissao + horasExtras + reflexoHorasExtras;
-
-            // 3. Cálculo do INSS
-            const baseINSS = Math.min(baseContribuivel, INSS_MAX_CONTRIBUTION_BASE);
-            const descontoINSS = calcularINSS(baseINSS);
-            
-            // 3b. Cálculo do FGTS (Base e Valor)
-            const baseFGTS = baseContribuivel; // FGTS não tem teto, é sobre a base integral
-            const valorFGTS = baseFGTS * FGTS_RATE;
-
-            // 4. Cálculo da Base de IRRF (Utiliza o Total Bruto)
-            let deducaoTipo = '';
-            
-            // 4a. Dedução Legal Completa (INSS + Dependentes)
-            const deducaoDependentes = numDependentes * DEPENDENT_DEDUCTION;
-            const deducaoLegalCompleta = descontoINSS + deducaoDependentes; 
-
-            // 4b. Dedução Simplificada Fixa
-            const deducaoSimplificadaFixa = SIMPLIFIED_DEDUCTION;
-            
-            // 4c. Escolhe a dedução total mais vantajosa
-            let totalDeducoesIRRF = 0;
-            
-            if (deducaoSimplificadaFixa > deducaoLegalCompleta) {
-                 totalDeducoesIRRF = deducaoSimplificadaFixa;
-                 deducaoTipo = 'Simplificada (R$ ' + SIMPLIFIED_DEDUCTION.toFixed(2).replace('.', ',') + ')';
-            } else {
-                 totalDeducoesIRRF = deducaoLegalCompleta;
-                 deducaoTipo = 'Legal (INSS + Dependentes)';
-            }
-            
-            // 4d. Base IRRF = Total Bruto - Dedução Total Aplicada.
-            const baseIRRF = Math.max(0, totalBruto - totalDeducoesIRRF);
-            
-            // 5. Cálculo do IRRF
-            const descontoIRRF = calcularIRRF(baseIRRF);
-
-            // 6. Resultados Finais
-            // TOTAL DE DESCONTOS: INSS + IRRF + Plano de Saúde + Outros Descontos
-            const totalDescontos = descontoINSS + descontoIRRF + planoSaude + outrosDescontos; 
+            // 7. Salário Líquido
             const salarioLiquido = totalBruto - totalDescontos;
 
-            // 7. Atualiza a interface
-            $('resultadoTotalBruto').textContent = formatCurrency(totalBruto);
-            $('reflexoComissaoDisplay').textContent = formatCurrency(reflexoComissao); 
-            $('reflexoHorasExtrasDisplay').textContent = formatCurrency(reflexoHorasExtras); // NOVO
-            
-            // Resultados INSS e FGTS
-            $('resultadoBaseINSS').textContent = formatCurrency(baseINSS);
-            $('resultadoINSS').textContent = formatCurrency(descontoINSS);
-            $('resultadoBaseFGTS').textContent = formatCurrency(baseFGTS); 
-            $('resultadoValorFGTS').textContent = formatCurrency(valorFGTS); 
+            // 8. Armazenar resultados para o holerite
+            lastCalculations = {
+                salarioBase, comissao, premio, horasExtras,
+                reflexoComissao, reflexoHorasExtras,
+                baseINSS, valorINSS, baseFGTS, valorFGTS,
+                baseIRRF: irrfResult.base, 
+                valorIRRF,
+                deducaoAplicadaTipo: irrfResult.deductionType,
+                deducaoAliq: irrfResult.aliquota,
+                deducaoValor: irrfResult.deducao,
+                planoSaude, outrosDescontos,
+                totalBruto, totalDescontos, salarioLiquido,
+                dependentes, diasUteis: parseInt($('diasUteis').value) || 22, 
+                dsr: parseInt($('dsr').value) || 5, 
+            };
 
-            // Resultados IRRF e Líquido
-            $('resultadoBaseIRRF').textContent = formatCurrency(baseIRRF);
-            $('deducaoAplicadaTipo').textContent = deducaoTipo;
-            $('resultadoIRRF').textContent = formatCurrency(descontoIRRF);
-            $('resultadoPlanoSaude').textContent = formatCurrency(planoSaude); 
-            $('resultadoOutrosDescontos').textContent = formatCurrency(outrosDescontos); 
-            $('resultadoTotalDescontos').textContent = formatCurrency(totalDescontos);
-            $('resultadoSalarioLiquido').textContent = formatCurrency(salarioLiquido);
+            // 9. Atualizar a interface de resultados
+            $('resultadoTotalBruto').textContent = `R$ ${formatFloatToCurrency(totalBruto)}`;
+            $('resultadoBaseINSS').textContent = `R$ ${formatFloatToCurrency(baseINSS)}`;
+            $('resultadoINSS').textContent = `- R$ ${formatFloatToCurrency(valorINSS)}`;
+            $('resultadoBaseFGTS').textContent = `R$ ${formatFloatToCurrency(baseFGTS)}`;
+            $('resultadoValorFGTS').textContent = `R$ ${formatFloatToCurrency(valorFGTS)}`;
+            $('deducaoAplicadaTipo').textContent = irrfResult.deductionType;
+            $('resultadoBaseIRRF').textContent = `R$ ${formatFloatToCurrency(irrfResult.base)}`;
+            $('resultadoIRRF').textContent = `- R$ ${formatFloatToCurrency(valorIRRF)}`;
+            $('resultadoPlanoSaude').textContent = `- R$ ${formatFloatToCurrency(planoSaude)}`;
+            $('resultadoOutrosDescontos').textContent = `- R$ ${formatFloatToCurrency(outrosDescontos)}`;
+            $('resultadoTotalDescontos').textContent = `R$ ${formatFloatToCurrency(totalDescontos)}`;
+            $('resultadoSalarioLiquido').textContent = `R$ ${formatFloatToCurrency(salarioLiquido)}`;
         }
 
-        /**
-         * Limpa todos os campos do formulário e redefine os resultados.
-         */
+        // --- Funções de Interface e Holerite ---
+
+        function generateReceiptHTML(details, calculations) {
+            const { salarioBase, comissao, premio, horasExtras, reflexoComissao, reflexoHorasExtras, 
+                    baseINSS, valorINSS, baseFGTS, valorFGTS, baseIRRF, valorIRRF, 
+                    planoSaude, outrosDescontos, totalBruto, totalDescontos, salarioLiquido, dependentes,
+                    deducaoAliq, diasUteis, dsr
+            } = calculations;
+
+            const baseSemPremio = calculations.totalBruto - premio;
+            // Cálculo da alíquota efetiva (média) do INSS. Evita NaN se a base for 0.
+            const aliquotaINSS = baseSemPremio > 0 ? (valorINSS / baseSemPremio) * 100 : 0;
+            
+            // Dados da tabela de vencimentos e descontos com as rubricas solicitadas
+            const data = [
+                // VENCIMENTOS (Proventos)
+                { desc: 'Salário Base', ref: '30,0', prov: formatFloatToCurrency(salarioBase), desc: '0,00', base: formatFloatToCurrency(baseINSS) },
+                { desc: 'Comissões', ref: '', prov: formatFloatToCurrency(comissao), desc: '0,00', base: formatFloatToCurrency(baseINSS) },
+                { desc: 'Horas Extras', ref: '', prov: formatFloatToCurrency(horasExtras), desc: '0,00', base: formatFloatToCurrency(baseINSS) },
+                { desc: 'Reflexo DSR sobre Comissões', ref: `${dsr}/${diasUteis}`, prov: formatFloatToCurrency(reflexoComissao), desc: '0,00', base: formatFloatToCurrency(baseINSS) },
+                { desc: 'Reflexo DSR sobre H. Extras', ref: `${dsr}/${diasUteis}`, prov: formatFloatToCurrency(reflexoHorasExtras), desc: '0,00', base: formatFloatToCurrency(baseINSS) },
+                // Provento sem incidência
+                { desc: 'Prêmio por Desempenho (Não Incide)', ref: '', prov: formatFloatToCurrency(premio), desc: '0,00', base: '0,00' }, 
+                // DESCONTOS
+                { desc: 'Desconto INSS (Previdência)', ref: `${aliquotaINSS.toFixed(2).replace('.', ',')}%`, prov: '0,00', desc: formatFloatToCurrency(valorINSS), base: formatFloatToCurrency(baseINSS) },
+                { desc: 'Desconto IRRF', ref: `${deducaoAliq.toFixed(2).replace('.', ',')}%`, prov: '0,00', desc: formatFloatToCurrency(valorIRRF), base: formatFloatToCurrency(baseIRRF) },
+                { desc: 'Desconto Plano de Saúde', ref: '', prov: '0,00', desc: formatFloatToCurrency(planoSaude), base: '0,00' },
+                { desc: 'Outros Descontos (Diversos)', ref: '', prov: '0,00', desc: formatFloatToCurrency(outrosDescontos), base: '0,00' },
+            ].filter(item => parseCurrencyToFloat(item.prov) > 0 || parseCurrencyToFloat(item.desc) > 0 || parseFloat(item.ref.replace('%', '').replace(',', '.')) > 0);
+
+            // Adiciona a linha de FGTS no rodapé (não é um desconto, mas uma informação)
+            const fgtsRow = `
+                <tr class="text-sm border-t border-gray-300">
+                    <td colspan="4" class="py-1 text-right font-medium">FGTS (Depositado pela Empresa):</td>
+                    <td class="py-1 text-right font-bold text-green-700">${formatFloatToCurrency(valorFGTS)}</td>
+                </tr>
+            `;
+
+            return `
+            <div class="holerite-container-new print:w-full" id="holerite-content">
+                <div class="header-container border-b-2 border-gray-400 pb-3 mb-4 flex justify-between items-start">
+                    <div>
+                        <h1 class="text-2xl font-extrabold text-gray-800">${details.nomeEmpresa || 'EMPRESA NÃO INFORMADA'}</h1>
+                        <p class="text-xs text-gray-600">${details.enderecoEmpresa || 'Endereço não informado'}</p>
+                        <p class="text-xs text-gray-600 mt-1">CNPJ: ${details.cnpj || '00.000.000/0000-00'}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-semibold text-gray-700 block">DEMONSTRATIVO DE PAGAMENTO</span>
+                        <span class="text-xl font-extrabold text-blue-700 block mt-1">${details.competencia || 'MM/AAAA'}</span>
+                        <span class="text-xs text-gray-500 block">Competência</span>
+                    </div>
+                </div>
+
+                <div class="employee-info grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-gray-300 pb-3 mb-4 text-sm">
+                    <div class="col-span-1">
+                        <p class="text-xs text-gray-500">Cód.</p>
+                        <p class="font-bold">${details.codigoFuncionario || '-'}</p>
+                    </div>
+                    <div class="col-span-3">
+                        <p class="text-xs text-gray-500">Nome do Funcionário</p>
+                        <p class="font-bold">${details.nomeFuncionario || 'FUNCIONÁRIO'}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs text-gray-500">Função / Cargo</p>
+                        <p class="font-bold">${details.funcao || '-'}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs text-gray-500">Dependentes IRRF</p>
+                        <p class="font-bold">${dependentes}</p>
+                    </div>
+                </div>
+
+                <table class="w-full text-left text-sm mb-6 table-fixed">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold tracking-wider">
+                            <th class="py-2 px-1 w-1/2">Descrição</th>
+                            <th class="py-2 px-1 w-1/12 text-center">Ref.</th>
+                            <th class="py-2 px-1 w-1/6 text-right">Proventos (R$)</th>
+                            <th class="py-2 px-1 w-1/6 text-right">Descontos (R$)</th>
+                            <th class="py-2 px-1 w-1/6 text-right">Base INSS/FGTS (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(item => `
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-1 px-1">${item.desc}</td>
+                                <td class="py-1 px-1 text-center">${item.ref}</td>
+                                <td class="py-1 px-1 text-right text-green-600">${item.prov}</td>
+                                <td class="py-1 px-1 text-right text-red-600">${item.desc}</td>
+                                <td class="py-1 px-1 text-right text-gray-700">${item.base}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="footer-summary grid grid-cols-3 gap-4 border-t-2 border-gray-400 pt-4">
+                    <div class="col-span-1 p-2 bg-gray-50 border rounded-lg">
+                        <p class="text-xs text-gray-500">Total Vencimentos (Bruto)</p>
+                        <p class="text-lg font-bold text-green-700">R$ ${formatFloatToCurrency(totalBruto)}</p>
+                    </div>
+                    <div class="col-span-1 p-2 bg-red-50 border rounded-lg">
+                        <p class="text-xs text-gray-500">Total Descontos</p>
+                        <p class="text-lg font-bold text-red-700">R$ ${formatFloatToCurrency(totalDescontos)}</p>
+                    </div>
+                    <div class="col-span-1 p-2 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                        <p class="text-xs text-gray-500">Valor Líquido a Receber</p>
+                        <p class="text-2xl font-extrabold text-blue-800">R$ ${formatFloatToCurrency(salarioLiquido)}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 border-t border-gray-300 pt-4">
+                    <p class="text-sm text-gray-700 font-medium">Informações Adicionais:</p>
+                    <div class="flex justify-between text-xs text-gray-600 mt-1">
+                        <p>Base INSS: R$ ${formatFloatToCurrency(baseINSS)}</p>
+                        <p>Base IRRF: R$ ${formatFloatToCurrency(baseIRRF)}</p>
+                        <p>Base FGTS: R$ ${formatFloatToCurrency(baseFGTS)}</p>
+                        <p>FGTS do Mês: R$ ${formatFloatToCurrency(valorFGTS)}</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">Declaro ter recebido a importância líquida detalhada neste demonstrativo.</p>
+                    <div class="mt-8 pt-4 border-t border-dashed border-gray-400 text-center">
+                        <p class="text-sm text-gray-600">Assinatura do Funcionário</p>
+                    </div>
+                </div>
+
+                <div class="no-print mt-6 flex justify-end space-x-3">
+                    <button onclick="closeReceipt()" class="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition">Fechar Visualização</button>
+                    <button onclick="printReceipt()" class="px-4 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition">Imprimir Recibo</button>
+                </div>
+            </div>
+            `;
+        }
+        
+        function openModal() {
+            // Verifica se os cálculos já foram feitos. Se não, forçar o cálculo.
+            if (!lastCalculations.totalBruto) {
+                calcularTudo();
+            }
+            $('modal-complementary-data').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            $('modal-complementary-data').classList.add('hidden');
+        }
+
+        function confirmReceiptDetails() {
+            // 1. Coleta os dados de detalhes
+            const details = {
+                competencia: $('competencia').value,
+                cnpj: $('cnpj').value,
+                nomeEmpresa: $('nomeEmpresaDisplay').value, // Agora lê o valor diretamente do campo editável
+                nomeFuncionario: $('nomeFuncionario').value,
+                funcao: $('funcao').value,
+                enderecoEmpresa: $('enderecoEmpresa').value,
+                codigoFuncionario: $('codigoFuncionario').value,
+            };
+
+            // 2. Validação simples
+            if (!details.competencia || !details.cnpj || !details.nomeFuncionario || !details.funcao || !details.nomeEmpresa) {
+                // Alerta simples (Substituir por um modal mais sofisticado em ambiente de produção)
+                alert('Por favor, preencha todos os campos obrigatórios (Competência, CNPJ, Nome da Empresa, Nome e Função do Funcionário) para gerar o recibo.');
+                return; 
+            }
+
+            // 3. Gera e exibe o holerite
+            const receiptHtml = generateReceiptHTML(details, lastCalculations);
+            
+            $('receipt-output').innerHTML = receiptHtml;
+            $('main-interface').classList.add('hidden');
+            $('receipt-output').classList.remove('hidden');
+
+            closeModal();
+        }
+
+
+        function printReceipt() {
+            window.print();
+        }
+
+        function closeReceipt() {
+            $('receipt-output').classList.add('hidden');
+            $('main-interface').classList.remove('hidden');
+        }
+
         function limparCampos() {
-            const form = $('calculation-form');
-            form.querySelectorAll('input[type="number"]').forEach(input => {
-                if (input.id === 'dependentes' || input.id === 'dsr') {
+            document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+                if (input.id === 'diasUteis') {
+                    input.value = '22';
+                } else if (input.id === 'dsr') {
+                    input.value = '5';
+                } else if (input.id === 'dependentes') {
                     input.value = '0';
-                } else if (input.id === 'diasUteis') {
-                    input.value = '22'; // Valor padrão razoável
-                } else {
-                    input.value = '0.00';
+                } else if (input.classList.contains('currency-input')) {
+                    input.value = '';
+                } 
+                // Não limpa campos de detalhes do recibo para manter valores padrão
+            });
+
+            // Reseta os resultados e cálculos
+            lastCalculations = {};
+            $('resultadoTotalBruto').textContent = 'R$ 0,00';
+            $('resultadoBaseINSS').textContent = 'R$ 0,00';
+            $('resultadoINSS').textContent = 'R$ 0,00';
+            $('resultadoBaseFGTS').textContent = 'R$ 0,00';
+            $('resultadoValorFGTS').textContent = 'R$ 0,00';
+            $('deducaoAplicadaTipo').textContent = 'Legal (INSS + Dependentes)';
+            $('resultadoBaseIRRF').textContent = 'R$ 0,00';
+            $('resultadoIRRF').textContent = 'R$ 0,00';
+            $('resultadoPlanoSaude').textContent = 'R$ 0,00';
+            $('resultadoOutrosDescontos').textContent = 'R$ 0,00';
+            $('resultadoTotalDescontos').textContent = 'R$ 0,00';
+            $('resultadoSalarioLiquido').textContent = 'R$ 0,00';
+            $('reflexoComissaoDisplay').textContent = 'R$ 0,00';
+            $('reflexoHorasExtrasDisplay').textContent = 'R$ 0,00';
+            
+            // Re-setup currency inputs to re-apply blur logic
+            setupCurrencyInputs();
+            calcularTudo(); // Recalcula para garantir que todos os displays estejam zerados corretamente
+        }
+
+        // --- Inicialização ---
+        window.onload = function() {
+            setupCurrencyInputs();
+            calcularTudo(); // Chama para iniciar com "R$ 0,00" e preencher os displays
+
+            // Adiciona um listener genérico para recalcular em tempo real as reflexões e o cálculo principal
+            document.querySelectorAll('input').forEach(input => {
+                // Monitora apenas os campos que afetam o cálculo principal, excluindo os do modal
+                if (input.id !== 'competencia' && input.id !== 'cnpj' && input.id !== 'nomeEmpresaDisplay' && input.id !== 'nomeFuncionario' && input.id !== 'funcao' && input.id !== 'enderecoEmpresa' && input.id !== 'codigoFuncionario') {
+                    input.addEventListener('input', () => {
+                        calcularReflexos();
+                        // Opcional: calcularTudo() pode ser chamado aqui para atualização completa em tempo real
+                    });
                 }
             });
-            
-            // Executa o cálculo para limpar o display de resultados
-            calcularTudo();
-        }
-
-        // --- Configuração de Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = $('calculation-form');
-            const inputs = form.querySelectorAll('input');
-
-            // Adiciona listener para recalcular em qualquer alteração nos campos
-            inputs.forEach(input => {
-                input.addEventListener('input', calcularTudo);
-            });
-
-            // Executa o cálculo inicial
-            calcularTudo();
-        });
-        
-        // Inicializa o tooltip e a responsividade
-        tailwind.config = {
-          theme: {
-            extend: {
-              colors: {
-                'primary-blue': '#3b82f6',
-                'success-green': '#10b981',
-              },
-              fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-              },
-            }
-          }
-        }
-        
+        };
     </script>
 </body>
 </html>
+
